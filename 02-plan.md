@@ -79,7 +79,7 @@ Los endpoints de pacientes y gestores alimentan los selects del formulario de re
 
 Si el tiempo aprieta, el recorte previsto es bajar a CA-2 + CA-3 (se documenta el recorte en este plan y en la bitácora). La secuencia suma alrededor de siete horas de trabajo efectivo: por encima de la referencia de cuatro a seis horas del enunciado, principalmente por la curva de aprendizaje del stack, y dentro del reloj de la prueba con margen.
 
-Cada bloque de esta secuencia pertenece a un cambio de OpenSpec (ver sección 8), y cada cambio avanza con su propio `proposal.md`, `tasks.md` y delta de specs antes de escribir código.
+Las tareas 3 a 7 se ejecutan dentro de los cambios de OpenSpec (ver sección 8): cada cambio atraviesa en vertical el modelo, el servicio, la API, las pruebas y la pantalla de su criterio, y avanza con su propio `proposal.md`, `tasks.md` y delta de specs antes de escribir el código de ese cambio. Las tareas 1 y 2 (documentos, entorno y scaffolding) preceden a todos los cambios.
 
 ## 6. Riesgos
 
