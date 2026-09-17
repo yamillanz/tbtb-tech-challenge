@@ -17,6 +17,7 @@ Los commits de `01-hallazgos.md` y `02-plan.md` son anteriores al primer commit 
 - La lógica de negocio no vive en el controlador ni en el componente de interfaz.
 - Sin secretos en el código: cadenas de conexión y credenciales por configuración o variables de entorno (con archivo de ejemplo).
 - Mensajes de commit que explican qué cambió y por qué, en incrementos legibles.
+- El historial es decisión del autor: el asistente de IA hace commit y push solo cuando se lo indican, nunca por iniciativa propia.
 - Los datos de prueba se cargan con un script versionado.
 
 ## Uso de asistentes de IA
