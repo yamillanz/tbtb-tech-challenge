@@ -19,7 +19,7 @@
 
 - [ ] 4.1 `POST /api/contacts` en `ContactsController`: entrada `CreateContactRequest`, salida `ContactDto` (201), delega en el servicio
 - [ ] 4.2 `GET /api/patients` y `GET /api/gestors` devolviendo las listas ordenadas por nombre
-- [ ] 4.3 Verificar manualmente con Swagger en Development (201, 400 y 404 de los escenarios del spec)
+- [ ] 4.3 Verificar manualmente con peticiones HTTP locales los escenarios del spec (201, 400 y 404)
 
 ## 5. Prueba del criterio
 

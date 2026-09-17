@@ -1,6 +1,6 @@
 ## Context
 
-Primer cambio del repositorio: existe el scaffolding (`api/` proyecto .NET 8 con controladores y Swagger en Development; `web/` Angular 20; SQL Server 2022 en contenedor vía `docker-compose.yml`). No hay esquema, entidades ni endpoints de dominio. El modelo de datos está cerrado en el plan (sección 3) y el contrato en su sección 4; los supuestos que este diseño materializa están documentados en `01-hallazgos.md`.
+Primer cambio del repositorio: existe el scaffolding (`api/` proyecto .NET 8 con controladores; `web/` Angular 20; SQL Server 2022 en contenedor vía `docker-compose.yml`). No hay esquema, entidades ni endpoints de dominio. El modelo de datos está cerrado en el plan (sección 3) y el contrato en su sección 4; los supuestos que este diseño materializa están documentados en `01-hallazgos.md`.
 
 ## Goals / Non-Goals
 
