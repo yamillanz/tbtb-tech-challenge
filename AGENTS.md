@@ -19,6 +19,7 @@ Los commits de `01-hallazgos.md` y `02-plan.md` son anteriores al primer commit 
 - Mensajes de commit que explican qué cambió y por qué, en incrementos legibles.
 - El historial es decisión del autor: el asistente de IA hace commit y push solo cuando se lo indican, nunca por iniciativa propia.
 - Los datos de prueba se cargan con un script versionado.
+- El formato se verifica antes de cada commit: `dotnet format api --verify-no-changes` en la API y `npm run lint` en `web/`.
 
 ## Uso de asistentes de IA
 
