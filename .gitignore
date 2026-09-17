@@ -1,0 +1,19 @@
+# .NET
+bin/
+obj/
+*.user
+
+# Node / Angular
+node_modules/
+dist/
+.angular/
+
+# Entorno / secretos
+.env
+*.local
+
+# IDE / OS
+.vs/
+.vscode/
+.idea/
+.DS_Store
