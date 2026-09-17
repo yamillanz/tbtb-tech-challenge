@@ -17,3 +17,6 @@ dist/
 .vscode/
 .idea/
 .DS_Store
+
+# Sesiones de prueba con navegador
+.playwright-mcp/

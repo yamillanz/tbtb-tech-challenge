@@ -1,0 +1,24 @@
+.shell {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 1.5rem;
+
+  header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    border-bottom: 1px solid #e0e0e0;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+
+    h1 {
+      font-size: 1.25rem;
+      margin: 0;
+    }
+
+    a {
+      color: #005f8d;
+    }
+  }
+}

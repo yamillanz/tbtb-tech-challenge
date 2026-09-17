@@ -1,0 +1,85 @@
+<section class="contact-form">
+  <h1>Registrar contacto</h1>
+
+  @if (submitted()) {
+    <p class="success" role="status">El contacto quedó registrado.</p>
+  }
+
+  @if (generalError(); as mensaje) {
+    <p class="alert" role="alert">{{ mensaje }}</p>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="submit()">
+    <div class="field">
+      <label for="patientId">Paciente</label>
+      <select id="patientId" formControlName="patientId">
+        <option [ngValue]="null">Selecciona un paciente</option>
+        @for (patient of patients(); track patient.id) {
+          <option [ngValue]="patient.id">{{ patient.name }} · {{ patient.documentNumber }} · {{ patient.city }}</option>
+        }
+      </select>
+      @if (form.controls.patientId.touched && form.controls.patientId.errors; as errores) {
+        <p class="field-error">{{ errores['required'] ? 'Selecciona el paciente.' : errores['server'] }}</p>
+      }
+    </div>
+
+    <div class="field">
+      <label for="gestorId">Gestor</label>
+      <select id="gestorId" formControlName="gestorId">
+        <option [ngValue]="null">Selecciona un gestor</option>
+        @for (gestor of gestors(); track gestor.id) {
+          <option [ngValue]="gestor.id">{{ gestor.name }}</option>
+        }
+      </select>
+      @if (form.controls.gestorId.touched && form.controls.gestorId.errors; as errores) {
+        <p class="field-error">{{ errores['required'] ? 'Selecciona el gestor.' : errores['server'] }}</p>
+      }
+    </div>
+
+    <div class="field">
+      <label for="contactDate">Fecha del contacto</label>
+      <input id="contactDate" type="date" formControlName="contactDate" />
+      @if (form.controls.contactDate.touched && form.controls.contactDate.errors; as errores) {
+        <p class="field-error">{{ errores['required'] ? 'Indica la fecha del contacto.' : errores['server'] }}</p>
+      }
+    </div>
+
+    <div class="field">
+      <label for="channel">Canal</label>
+      <select id="channel" formControlName="channel">
+        <option value="">Selecciona el canal</option>
+        @for (channel of channels; track channel) {
+          <option [value]="channel">{{ channel }}</option>
+        }
+      </select>
+      @if (form.controls.channel.touched && form.controls.channel.errors; as errores) {
+        <p class="field-error">{{ errores['required'] ? 'Selecciona el canal.' : errores['server'] }}</p>
+      }
+    </div>
+
+    <div class="field">
+      <label for="result">Resultado</label>
+      <select id="result" formControlName="result">
+        <option value="">Selecciona el resultado</option>
+        @for (result of results; track result) {
+          <option [value]="result">{{ result }}</option>
+        }
+      </select>
+      @if (form.controls.result.touched && form.controls.result.errors; as errores) {
+        <p class="field-error">{{ errores['required'] ? 'Selecciona el resultado.' : errores['server'] }}</p>
+      }
+    </div>
+
+    <div class="field">
+      <label for="notes">Notas (opcional)</label>
+      <textarea id="notes" formControlName="notes" rows="3"></textarea>
+      @if (form.controls.notes.errors?.['server']; as mensaje) {
+        <p class="field-error">{{ mensaje }}</p>
+      }
+    </div>
+
+    <button type="submit" [disabled]="submitting()">
+      {{ submitting() ? 'Registrando…' : 'Registrar contacto' }}
+    </button>
+  </form>
+</section>
