@@ -21,4 +21,11 @@ public class ContactsController : ControllerBase
         var contact = await _service.CreateContactAsync(request, cancellationToken);
         return StatusCode(StatusCodes.Status201Created, contact);
     }
+
+    [HttpGet]
+    public async Task<IActionResult> List([FromQuery] string? month, CancellationToken cancellationToken)
+    {
+        var contacts = await _service.ListContactsOfMonthAsync(month, cancellationToken);
+        return Ok(contacts);
+    }
 }

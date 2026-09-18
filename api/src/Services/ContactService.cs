@@ -8,10 +8,6 @@ namespace TbtbChallenge.Api.Services;
 
 public class ContactService
 {
-    private static readonly string[] Channels = ["llamada", "whatsapp", "correo"];
-
-    private static readonly string[] Results = ["contestado", "no contesta", "buzón", "número equivocado", "reagendado", "otro"];
-
     private readonly TbtbChallengeDbContext _context;
 
     public ContactService(TbtbChallengeDbContext context)
@@ -21,9 +17,9 @@ public class ContactService
 
     public async Task<ContactDto> CreateContactAsync(CreateContactRequest request, CancellationToken cancellationToken)
     {
-        ValidateChannel(request.Channel);
-        ValidateResult(request.Result);
-        ValidateContactDate(request.ContactDate);
+        ContactRules.ValidateChannel(request.Channel);
+        ContactRules.ValidateResult(request.Result);
+        ContactRules.ValidateContactDate(request.ContactDate);
 
         var patient = await _context.Patients
             .SingleOrDefaultAsync(p => p.Id == request.PatientId, cancellationToken)
@@ -59,36 +55,100 @@ public class ContactService
             contact.Notes);
     }
 
-    private static void ValidateChannel(string channel)
+    public async Task<IReadOnlyList<ContactListItemDto>> ListContactsOfMonthAsync(string? month, CancellationToken cancellationToken)
     {
-        if (!Channels.Contains(channel))
-        {
-            throw new ValidationException("channel", $"El canal debe ser uno de: {string.Join(", ", Channels)}.");
-        }
-    }
-
-    private static void ValidateResult(string result)
-    {
-        if (!Results.Contains(result))
-        {
-            throw new ValidationException("result", $"El resultado debe ser uno de: {string.Join(", ", Results)}.");
-        }
-    }
-
-    private static void ValidateContactDate(DateOnly date)
-    {
-        var today = ProgramToday();
-        var startOfMonth = new DateOnly(today.Year, today.Month, 1);
+        var startOfMonth = StartOfMonthFrom(month);
         var endOfMonth = startOfMonth.AddMonths(1).AddDays(-1);
 
-        if (date < startOfMonth || date > endOfMonth)
+        var contacts = await _context.Contacts
+            .Include(c => c.Patient)
+            .Include(c => c.Gestor)
+            .Where(c => c.ContactDate >= startOfMonth && c.ContactDate <= endOfMonth)
+            .OrderBy(c => c.ContactDate).ThenBy(c => c.Id)
+            .ToListAsync(cancellationToken);
+
+        var contactIds = contacts.Select(c => c.Id).ToList();
+
+        var amendments = await _context.ContactAmendments
+            .Where(a => contactIds.Contains(a.ContactId))
+            .OrderBy(a => a.Id)
+            .ToListAsync(cancellationToken);
+
+        var amendmentsByContact = amendments
+            .GroupBy(a => a.ContactId)
+            .ToDictionary(g => g.Key, g => g.ToList());
+
+        var list = new List<ContactListItemDto>(contacts.Count);
+        foreach (var contact in contacts)
         {
-            throw new ValidationException("contactDate", $"La fecha del contacto debe estar dentro del mes en curso ({startOfMonth:yyyy-MM-dd} a {endOfMonth:yyyy-MM-dd}).");
+            var current = ResolveCurrentValues(contact, amendmentsByContact.GetValueOrDefault(contact.Id, []));
+            list.Add(new ContactListItemDto(
+                contact.Id,
+                contact.Patient.Name,
+                contact.Gestor.Name,
+                current.ContactDate,
+                current.Channel,
+                current.Result,
+                current.Notes));
         }
+
+        return list;
     }
 
-    private static DateOnly ProgramToday()
+    private static Contact ResolveCurrentValues(Contact contact, IReadOnlyList<ContactAmendment> amendments)
     {
-        return DateOnly.FromDateTime(DateTime.UtcNow.AddHours(-5));
+        var channel = contact.Channel;
+        var result = contact.Result;
+        var contactDate = contact.ContactDate;
+        var notes = contact.Notes;
+
+        foreach (var amendment in amendments)
+        {
+            if (amendment.NewChannel is not null)
+            {
+                channel = amendment.NewChannel;
+            }
+
+            if (amendment.NewResult is not null)
+            {
+                result = amendment.NewResult;
+            }
+
+            if (amendment.NewContactDate is not null)
+            {
+                contactDate = amendment.NewContactDate.Value;
+            }
+
+            if (amendment.NewNotes is not null)
+            {
+                notes = amendment.NewNotes;
+            }
+        }
+
+        return new Contact
+        {
+            Id = contact.Id,
+            PatientId = contact.PatientId,
+            GestorId = contact.GestorId,
+            ContactDate = contactDate,
+            Channel = channel,
+            Result = result,
+            Notes = notes
+        };
+    }
+
+    private static DateOnly StartOfMonthFrom(string? month)
+    {
+        if (string.IsNullOrWhiteSpace(month))
+        {
+            return ContactRules.StartOfCurrentProgramMonth();
+        }
+
+        if (!DateOnly.TryParseExact(month, "yyyy-MM", out var parsed))
+        {
+            throw new ValidationException("month", "El mes debe tener el formato YYYY-MM.");
+        }
+
+        return new DateOnly(parsed.Year, parsed.Month, 1);
     }
 }

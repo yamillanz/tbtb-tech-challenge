@@ -1,0 +1,122 @@
+<section class="contact-list">
+  <h1>Contactos del mes</h1>
+
+  @if (corrected()) {
+    <p class="success" role="status">La corrección quedó registrada.</p>
+  }
+
+  @if (selected(); as contacto) {
+    <div class="modal" role="dialog" aria-label="Corregir contacto">
+      <h2>Corregir contacto de {{ contacto.patientName }}</h2>
+
+      @if (generalError(); as mensaje) {
+        <p class="alert" role="alert">{{ mensaje }}</p>
+      }
+
+      <form [formGroup]="form" (ngSubmit)="save()">
+        <div class="field">
+          <label for="correctingGestorId">Gestor que corrige</label>
+          <select id="correctingGestorId" formControlName="correctingGestorId">
+            <option [ngValue]="null">Selecciona el gestor</option>
+            @for (gestor of gestors(); track gestor.id) {
+              <option [ngValue]="gestor.id">{{ gestor.name }}</option>
+            }
+          </select>
+          @if (form.controls.correctingGestorId.touched && form.controls.correctingGestorId.errors; as errores) {
+            <p class="field-error">{{ errores['required'] ? 'Selecciona el gestor que corrige.' : errores['server'] }}</p>
+          }
+        </div>
+
+        <div class="field">
+          <label for="reason">Motivo de la corrección</label>
+          <textarea id="reason" formControlName="reason" rows="2"></textarea>
+          @if (form.controls.reason.errors?.['server']; as mensaje) {
+            <p class="field-error">{{ mensaje }}</p>
+          }
+        </div>
+
+        <div class="par">
+          <div class="field">
+            <label for="channel">Canal</label>
+            <select id="channel" formControlName="channel">
+              @for (channel of channels; track channel) {
+                <option [value]="channel">{{ channel }}</option>
+              }
+            </select>
+            @if (form.controls.channel.errors?.['server']; as mensaje) {
+              <p class="field-error">{{ mensaje }}</p>
+            }
+          </div>
+
+          <div class="field">
+            <label for="result">Resultado</label>
+            <select id="result" formControlName="result">
+              @for (result of results; track result) {
+                <option [value]="result">{{ result }}</option>
+              }
+            </select>
+            @if (form.controls.result.errors?.['server']; as mensaje) {
+              <p class="field-error">{{ mensaje }}</p>
+            }
+          </div>
+        </div>
+
+        <div class="par">
+          <div class="field">
+            <label for="contactDate">Fecha del contacto</label>
+            <input id="contactDate" type="date" formControlName="contactDate" />
+            @if (form.controls.contactDate.errors?.['server']; as mensaje) {
+              <p class="field-error">{{ mensaje }}</p>
+            }
+          </div>
+
+          <div class="field">
+            <label for="notes">Notas</label>
+            <textarea id="notes" formControlName="notes" rows="2"></textarea>
+            @if (form.controls.notes.errors?.['server']; as mensaje) {
+              <p class="field-error">{{ mensaje }}</p>
+            }
+          </div>
+        </div>
+
+        <div class="acciones">
+          <button type="submit" [disabled]="submitting()">
+            {{ submitting() ? 'Guardando…' : 'Guardar corrección' }}
+          </button>
+          <button type="button" class="secondary" (click)="cancel()">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  }
+
+  <table>
+    <thead>
+      <tr>
+        <th>Paciente</th>
+        <th>Gestor</th>
+        <th>Fecha</th>
+        <th>Canal</th>
+        <th>Resultado</th>
+        <th>Notas</th>
+        <th><span class="sr-only">Acciones</span></th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (contact of contacts(); track contact.id) {
+        <tr>
+          <td>{{ contact.patientName }}</td>
+          <td>{{ contact.gestorName }}</td>
+          <td>{{ contact.contactDate }}</td>
+          <td>{{ contact.channel }}</td>
+          <td>{{ contact.result }}</td>
+          <td>{{ contact.notes }}</td>
+          <td>
+            <button type="button" class="secondary" (click)="openCorrection(contact)">Corregir</button>
+          </td>
+        </tr>
+      } @empty {
+        <tr><td colspan="7">No hay contactos registrados este mes.</td></tr>
+      }
+    </tbody>
+  </table>
+</section>

@@ -14,6 +14,7 @@ builder.Services.AddDbContext<TbtbChallengeDbContext>(options =>
 
 builder.Services.AddScoped<ContactService>();
 builder.Services.AddScoped<CatalogService>();
+builder.Services.AddScoped<ContactAmendmentService>();
 
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<ApiExceptionHandler>();

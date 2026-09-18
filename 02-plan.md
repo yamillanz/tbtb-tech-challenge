@@ -49,7 +49,7 @@ Base de datos: **SQL Server**. El esquema se crea con scripts `.sql` versionados
 | Método | Ruta | Entrada | Salida | Errores |
 |---|---|---|---|---|
 | POST | `/api/contacts` | `CreateContactRequest` { patientId, gestorId, contactDate, channel, result, notes } | `ContactDto` (201) | 400 validación (ProblemDetails), 404 paciente o gestor inexistente |
-| POST | `/api/contacts/{id}/amendments` | `CreateAmendmentRequest` { reason, channel?, result?, contactDate?, notes? } | `ContactDto` actualizado (200) | 400 (motivo obligatorio, sin campos a corregir), 404 contacto inexistente |
+| POST | `/api/contacts/{id}/amendments` | `CreateAmendmentRequest` { gestorId, reason, channel?, result?, contactDate?, notes? } | `ContactDto` actualizado (200) | 400 (motivo obligatorio, sin campos a corregir), 404 contacto inexistente |
 | GET | `/api/contacts?month=YYYY-MM&gestorId=&city=` | parámetros de consulta; sin `month` se asume el mes en curso | `ContactListItemDto[]` | 400 (mes inválido o fuera de rango) |
 | GET | `/api/contacts/{id}/amendments` | — | `AmendmentDto[]` | 404 |
 | GET | `/api/patients` | — | `PatientOptionDto[]` { id, name, documentNumber, city } | — |

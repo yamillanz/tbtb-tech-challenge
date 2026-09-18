@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import { Contact, CreateContactRequest, GestorOption, PatientOption } from '../models/contacts.models';
+import { Contact, ContactListItem, CreateAmendmentRequest, CreateContactRequest, GestorOption, PatientOption } from '../models/contacts.models';
 
 @Injectable({ providedIn: 'root' })
 export class ContactsService {
@@ -10,6 +10,14 @@ export class ContactsService {
 
   createContact(request: CreateContactRequest): Observable<Contact> {
     return this.http.post<Contact>(`${this.baseUrl}/contacts`, request);
+  }
+
+  listContacts(): Observable<ContactListItem[]> {
+    return this.http.get<ContactListItem[]>(`${this.baseUrl}/contacts`);
+  }
+
+  createAmendment(contactId: number, request: CreateAmendmentRequest): Observable<Contact> {
+    return this.http.post<Contact>(`${this.baseUrl}/contacts/${contactId}/amendments`, request);
   }
 
   listPatients(): Observable<PatientOption[]> {
