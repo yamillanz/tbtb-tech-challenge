@@ -84,7 +84,9 @@ export class ContactForm implements OnInit {
     const errors = body?.errors;
     if (errors) {
       for (const [field, message] of Object.entries(errors)) {
-        this.form.get(field)?.setErrors({ server: message });
+        const control = this.form.get(field);
+        control?.setErrors({ server: message });
+        control?.markAsTouched();
       }
       return;
     }
@@ -102,5 +104,5 @@ export class ContactForm implements OnInit {
 }
 
 function today(): string {
-  return new Date().toISOString().slice(0, 10);
+  return new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString().slice(0, 10);
 }
