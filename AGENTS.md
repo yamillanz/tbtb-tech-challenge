@@ -21,6 +21,21 @@ Los commits de `01-hallazgos.md` y `02-plan.md` son anteriores al primer commit 
 - Los datos de prueba se cargan con un script versionado.
 - El formato se verifica antes de cada commit: `dotnet format api --verify-no-changes` en la API y `npm run lint` en `web/`.
 
+## Regla de idioma del código (obligatoria)
+
+Todo identificador del código — métodos, variables, señales, clases, propiedades, DTOs y claves CSS — va en **inglés**. El español queda únicamente en:
+
+- los **datos** (valores de catálogos, nombres y notas del seed),
+- los **textos de la interfaz** (etiquetas, mensajes y botones),
+- los **nombres de las pruebas** (espejo verbatim de los criterios del PRD, decisión del autor),
+- y el término **"Gestor"**, que es vocabulario del PRD (entidad, tabla y endpoint).
+
+Cualquier identificador con español es un rechazo. Antes de commitear código nuevo, correr el barrido de idioma sobre los archivos tocados y revisar cada resultado (los permitidos son solo los cuatro casos de arriba):
+
+```bash
+grep -rniE "(abrir|cerrar|cargar|guardar|cancelar|registrar|listar|validar|aplicar|crear|obtener|enviar|vigente|corregir)[a-zA-Záéíóúñ]*" --include="*.cs" --include="*.ts" --include="*.html" api/src api/tests web/src
+```
+
 ## Uso de asistentes de IA
 
 Se usan asistentes de IA durante el trabajo y quedan declarados en `03-bitacora.md`, junto con las decisiones aceptadas, rechazadas o corregidas y su motivo. Cualquier línea de este repositorio debe poder ser explicada por su autor.
