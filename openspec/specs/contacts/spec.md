@@ -37,11 +37,15 @@ El contacto SHALL referenciar un paciente existente y un gestor existente en el 
 - **THEN** la API responde 404 con ProblemDetails y el contacto no se persiste
 
 ### Requirement: Errores de validación en formato ProblemDetails
-Todo error de validación o de referencia SHALL responder en formato ProblemDetails con el campo y el mensaje del error, de forma que la interfaz pueda mostrarlo junto al campo correspondiente.
+Todo error de validación o de referencia SHALL responder en formato ProblemDetails con el campo y el mensaje del error, de forma que la interfaz pueda mostrarlo junto al campo correspondiente. El sobre SHALL incluir el diccionario `errors` con el campo incumplido y su mensaje en español.
 
 #### Scenario: Validación con detalle de campo
 - **WHEN** el registro de contacto incumple una regla de validación
 - **THEN** la respuesta 400 es un ProblemDetails cuyo detalle identifica el campo incumplido y el mensaje en español
+
+#### Scenario: El sobre expone el campo incumplido en errors
+- **WHEN** el registro de contacto incumple una regla de validación
+- **THEN** la respuesta es `application/problem+json` con `title`, `status`, `detail` y `errors` con el campo incumplido y su mensaje
 
 ### Requirement: Listas de referencia para el formulario
 El sistema SHALL exponer la lista de pacientes (id, nombre, documento y ciudad) y la lista de gestores (id y nombre), ordenadas por nombre, para alimentar los selects del formulario de registro.
