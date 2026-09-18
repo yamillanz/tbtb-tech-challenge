@@ -1,8 +1,8 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ContactsService } from '../services/contacts.service';
-import { ContactListItem, CreateAmendmentRequest, GestorOption, ProblemDetailsResponse } from '../models/contacts.models';
+import { ContactListItem, ContactPage, CreateAmendmentRequest, GestorOption, ProblemDetailsResponse } from '../models/contacts.models';
 
 export interface DayEntry {
   date: string;
@@ -20,7 +20,7 @@ export class ContactList {
   private readonly nfb = inject(NonNullableFormBuilder);
   private readonly contactsService = inject(ContactsService);
 
-  readonly contacts = signal<ContactListItem[]>([]);
+  readonly pageData = signal<ContactPage | null>(null);
   readonly gestors = signal<GestorOption[]>([]);
   readonly cities = signal<string[]>([]);
   readonly selected = signal<ContactListItem | null>(null);
@@ -31,6 +31,7 @@ export class ContactList {
   readonly filterGestorId = signal<number | null>(null);
   readonly filterCity = signal<string>('');
   readonly selectedDay = signal<string | null>(null);
+  readonly currentPage = signal(1);
 
   readonly channels = ['llamada', 'whatsapp', 'correo'];
   readonly results = ['contestado', 'no contesta', 'buzón', 'número equivocado', 'reagendado', 'otro'];
@@ -44,9 +45,13 @@ export class ContactList {
     notes: this.nfb.control('')
   });
 
-  readonly days = signal<DayEntry[]>([]);
+  readonly dayEntries = computed<DayEntry[]>(() =>
+    Object.entries(this.pageData()?.dayCounts ?? {})
+      .map(([date, count]) => ({ date, count }))
+      .sort((a, b) => a.date.localeCompare(b.date))
+  );
 
-  readonly visibleContacts = signal<ContactListItem[]>([]);
+  readonly pageItems = computed<ContactListItem[]>(() => this.pageData()?.items ?? []);
 
   constructor() {
     this.contactsService.listGestors().subscribe({
@@ -62,54 +67,45 @@ export class ContactList {
 
   filterByGestor(value: string | null): void {
     this.filterGestorId.set(value === null || value === '' ? null : Number(value));
+    this.currentPage.set(1);
     this.loadContacts();
   }
 
   filterByCity(city: string): void {
     this.filterCity.set(city);
+    this.currentPage.set(1);
     this.loadContacts();
   }
 
   selectDay(day: string | null): void {
     this.selectedDay.set(day);
-    this.refreshVisibleContacts();
+    this.currentPage.set(1);
+    this.loadContacts();
+  }
+
+  goToPage(target: number): void {
+    const page = this.pageData();
+    if (!page || target < 1 || target > page.totalPages || target === page.page) {
+      return;
+    }
+    this.currentPage.set(target);
+    this.loadContacts();
   }
 
   private loadContacts(): void {
     const gestorId = this.filterGestorId() ?? undefined;
     const city = this.filterCity() || undefined;
+    const day = this.selectedDay() ?? undefined;
 
-    this.contactsService.listContacts({ gestorId, city }).subscribe({
-      next: (contacts) => {
-        this.contacts.set(contacts);
-        this.rebuildDayStrip(contacts);
-        this.refreshVisibleContacts();
+    this.contactsService.listContacts({ gestorId, city, day, page: this.currentPage() }).subscribe({
+      next: (pageData) => {
+        this.pageData.set(pageData);
+        const currentDay = this.selectedDay();
+        if (currentDay && !(currentDay in pageData.dayCounts)) {
+          this.selectDay(null);
+        }
       }
     });
-  }
-
-  private rebuildDayStrip(contacts: ContactListItem[]): void {
-    const conteos = new Map<string, number>();
-    for (const contact of contacts) {
-      conteos.set(contact.contactDate, (conteos.get(contact.contactDate) ?? 0) + 1);
-    }
-
-    this.days.set(
-      [...conteos.entries()]
-        .map(([date, count]) => ({ date, count }))
-        .sort((a, b) => a.date.localeCompare(b.date))
-    );
-
-    if (this.selectedDay() && !conteos.has(this.selectedDay()!)) {
-      this.selectedDay.set(null);
-    }
-    this.refreshVisibleContacts();
-  }
-
-  private refreshVisibleContacts(): void {
-    const day = this.selectedDay();
-    const list = day ? this.contacts().filter((c) => c.contactDate === day) : this.contacts();
-    this.visibleContacts.set(list);
   }
 
   openCorrection(contact: ContactListItem): void {

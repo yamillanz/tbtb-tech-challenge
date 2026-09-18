@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { of, throwError } from 'rxjs';
 import { ContactList } from './contact-list';
 import { ContactsService } from '../services/contacts.service';
-import { Contact, ContactFilters, ContactListItem } from '../models/contacts.models';
+import { Contact, ContactFilters, ContactListItem, ContactPage } from '../models/contacts.models';
 
 const contacts: ContactListItem[] = [
   {
@@ -36,17 +36,29 @@ const contacts: ContactListItem[] = [
 
 const currentContact: ContactListItem = { ...contacts[0], result: 'contestado' };
 
-type ListCalls = { gestorId?: number; city?: string }[];
+type ListCalls = { gestorId?: number; city?: string; day?: string; page?: number }[];
+
+function makePage(items: ContactListItem[], filters: ContactFilters): ContactPage {
+  const selected = filters.day ? items.filter((contact) => contact.contactDate === filters.day) : items;
+  return {
+    items: selected,
+    total: selected.length,
+    page: filters.page ?? 1,
+    pageSize: 2,
+    totalPages: 1,
+    dayCounts: { '2026-09-02': 2, '2026-09-05': 1 }
+  };
+}
 
 function createFakeService(overrides: Partial<ContactsService> = {}, listCalls?: ListCalls): ContactsService {
   return {
     listContacts: (filters: ContactFilters) => {
       listCalls?.push({ ...filters });
-      return of(contacts);
+      return of(makePage(contacts, filters));
     },
     listGestors: () => of([{ id: 19, name: 'Andrés Peña' }]),
     listPatients: () => of([{ id: 1, name: 'Ana Lucía Ortega', documentNumber: 'CC-1', city: 'Bogotá' }]),
-    createAmendment: () => of({ ...currentContact, id: 95, patientName: 'Ana Lucía Ortega', gestorName: 'Laura Gómez' }),
+    createAmendment: () => of({ ...currentContact, id: 95, patientId: 1, patientName: 'Ana Lucía Ortega', gestorId: 19, gestorName: 'Laura Gómez' }),
     createContact: () => throwError(() => new Error('no debe invocarse')),
     ...overrides
   } as unknown as ContactsService;
@@ -73,7 +85,7 @@ describe('ContactList', () => {
       {
     listContacts: (filters: ContactFilters) => {
           listCalls.push({ ...filters });
-          return of(listCalls.length === 1 ? contacts : [contacts[1]]);
+          return of(listCalls.length === 1 ? makePage(contacts, filters) : makePage([contacts[1]], filters));
         }
       }
     );
@@ -85,7 +97,7 @@ describe('ContactList', () => {
     await user.selectOptions(screen.getByLabelText('Ciudad'), screen.getByRole('option', { name: 'Bogotá' }));
 
     expect(listCalls.length).toBeGreaterThanOrEqual(3);
-    expect(listCalls[listCalls.length - 1]).toEqual({ gestorId: 19, city: 'Bogotá' });
+    expect(listCalls[listCalls.length - 1]).toEqual(jasmine.objectContaining({ gestorId: 19, city: 'Bogotá' }));
   });
 
   it('NavegacionPorDia_CuandoSeHaceClicEnUnDiaDeLaTira_LaTablaMuestraSoloEseDia', async () => {
@@ -140,7 +152,7 @@ describe('ContactList', () => {
       return of(correctedContact);
     });
 
-    await renderContactListWith(createFakeService({ listContacts: () => of(rows), createAmendment }));
+    await renderContactListWith(createFakeService({ listContacts: (filters: ContactFilters) => of(makePage(rows, filters)), createAmendment }));
 
     const user = userEvent.setup();
     await user.click(await screen.findAllByRole('button', { name: 'Corregir' }).then((botones) => botones[0]));
@@ -163,5 +175,40 @@ describe('ContactList', () => {
       const fila = screen.getByRole('row', { name: /Ana Lucía Ortega/ });
       expect(fila.textContent).toContain('contestado');
     });
+  });
+
+  it('PaginacionDeLaPantalla_CuandoSeAvanzaDePagina_SeSolicitaLaSiguienteYSePreservaTrasCorregir', async () => {
+    const listCalls: ListCalls = [];
+    const createFake = createFakeService(
+      {
+        listContacts: (filters: ContactFilters) => {
+          listCalls.push({ ...filters });
+          const isSecondPage = (filters.page ?? 1) === 2;
+          const page: ContactPage = isSecondPage
+            ? { items: [contacts[2]], total: 3, page: 2, pageSize: 2, totalPages: 2, dayCounts: { '2026-09-05': 1 } }
+            : { items: contacts.slice(0, 2), total: 3, page: 1, pageSize: 2, totalPages: 2, dayCounts: { '2026-09-02': 2 } };
+          return of(page);
+        },
+        createAmendment: () => of({ ...currentContact, id: 99, patientId: 1, patientName: 'Valentina Restrepo', gestorId: 19, gestorName: 'Andrés Peña' })
+      }
+    );
+
+    await renderContactListWith(createFake);
+
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole('button', { name: 'Siguiente' }));
+
+    expect(await screen.findByRole('cell', { name: 'Valentina Restrepo' })).toBeTruthy();
+    expect(screen.queryByRole('cell', { name: 'Ana Lucía Ortega' })).toBeNull();
+    expect(listCalls[listCalls.length - 1]).toEqual(jasmine.objectContaining({ page: 2 }));
+
+    await user.click(screen.getByRole('button', { name: 'Corregir' }));
+    await user.selectOptions(screen.getByLabelText('Gestor que corrige'), within(screen.getByLabelText('Gestor que corrige')).getByRole('option', { name: 'Andrés Peña' }));
+    await user.type(screen.getByLabelText('Motivo de la corrección'), 'Ajuste de notas');
+    await user.click(screen.getByRole('button', { name: 'Guardar corrección' }));
+
+    await waitFor(() => expect(listCalls.length).toBeGreaterThanOrEqual(3));
+    expect(listCalls[listCalls.length - 1]).toEqual(jasmine.objectContaining({ page: 2 }));
+    expect(await screen.findByRole('cell', { name: 'Valentina Restrepo' })).toBeTruthy();
   });
 });

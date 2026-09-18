@@ -27,10 +27,10 @@
     </div>
   </div>
 
-  @if (days().length) {
+  @if (dayEntries().length) {
     <div class="day-strip" role="group" aria-label="Días del mes con contactos">
       <button type="button" class="chip" [class.active]="selectedDay() === null" (click)="selectDay(null)">Mes completo</button>
-      @for (day of days(); track day.date) {
+      @for (day of dayEntries(); track day.date) {
         <button type="button" class="chip" [class.active]="selectedDay() === day.date" (click)="selectDay(day.date)">
           {{ day.date.slice(8) }} · {{ day.count }}
         </button>
@@ -135,7 +135,7 @@
       </tr>
     </thead>
     <tbody>
-      @for (contact of visibleContacts(); track contact.id) {
+      @for (contact of pageItems(); track contact.id) {
         <tr>
           <td>{{ contact.patientName }}</td>
           <td>{{ contact.gestorName }}</td>
@@ -152,4 +152,12 @@
       }
     </tbody>
   </table>
+
+  @if (pageData(); as page) {
+    <div class="pagination" role="group" aria-label="Paginación de contactos">
+      <button type="button" class="secondary" [disabled]="page.page <= 1" (click)="goToPage(page.page - 1)">Anterior</button>
+      <span>Página {{ page.page }} de {{ page.totalPages }} · {{ page.total }} contactos en el mes</span>
+      <button type="button" class="secondary" [disabled]="page.page >= page.totalPages" (click)="goToPage(page.page + 1)">Siguiente</button>
+    </div>
+  }
 </section>

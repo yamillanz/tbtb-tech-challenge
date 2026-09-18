@@ -23,9 +23,16 @@ public class ContactsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> List([FromQuery] string? month, [FromQuery] int? gestorId, [FromQuery] string? city, CancellationToken cancellationToken)
+    public async Task<IActionResult> List(
+        [FromQuery] string? month,
+        [FromQuery] int? gestorId,
+        [FromQuery] string? city,
+        [FromQuery] string? day,
+        [FromQuery] int? page,
+        [FromQuery] int? pageSize,
+        CancellationToken cancellationToken)
     {
-        var contacts = await _service.ListContactsOfMonthAsync(month, gestorId, city, cancellationToken);
+        var contacts = await _service.ListContactsOfMonthAsync(month, gestorId, city, day, page ?? 1, pageSize ?? 20, cancellationToken);
         return Ok(contacts);
     }
 }

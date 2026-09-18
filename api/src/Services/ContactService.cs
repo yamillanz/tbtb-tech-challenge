@@ -55,8 +55,18 @@ public class ContactService
             contact.Notes);
     }
 
-    public async Task<IReadOnlyList<ContactListItemDto>> ListContactsOfMonthAsync(string? month, int? gestorId, string? city, CancellationToken cancellationToken)
+    public async Task<ContactPageDto> ListContactsOfMonthAsync(string? month, int? gestorId, string? city, string? day, int page, int pageSize, CancellationToken cancellationToken)
     {
+        if (page < 1)
+        {
+            throw new ValidationException("page", "La página debe ser mayor o igual a 1.");
+        }
+
+        if (pageSize < 1 || pageSize > 100)
+        {
+            throw new ValidationException("pageSize", "El tamaño de página debe estar entre 1 y 100.");
+        }
+
         var startOfMonth = StartOfMonthFrom(month);
         var endOfMonth = startOfMonth.AddMonths(1).AddDays(-1);
 
@@ -75,9 +85,7 @@ public class ContactService
             query = query.Where(c => c.Patient.City == city);
         }
 
-        var contacts = await query
-            .OrderBy(c => c.ContactDate).ThenBy(c => c.Id)
-            .ToListAsync(cancellationToken);
+        var contacts = await query.ToListAsync(cancellationToken);
 
         var contactIds = contacts.Select(c => c.Id).ToList();
 
@@ -90,11 +98,11 @@ public class ContactService
             .GroupBy(a => a.ContactId)
             .ToDictionary(g => g.Key, g => g.ToList());
 
-        var list = new List<ContactListItemDto>(contacts.Count);
+        var resolved = new List<ContactListItemDto>(contacts.Count);
         foreach (var contact in contacts)
         {
             var current = ResolveCurrentValues(contact, amendmentsByContact.GetValueOrDefault(contact.Id, []));
-            list.Add(new ContactListItemDto(
+            resolved.Add(new ContactListItemDto(
                 contact.Id,
                 contact.Patient.Name,
                 contact.Gestor.Name,
@@ -104,7 +112,45 @@ public class ContactService
                 current.Notes));
         }
 
-        return list;
+        var selectedDay = ParseDay(day);
+
+        var dayCounts = resolved
+            .GroupBy(c => c.ContactDate)
+            .ToDictionary(g => g.Key.ToString("yyyy-MM-dd"), g => g.Count());
+
+        var selected = selectedDay is null
+            ? resolved
+            : resolved.Where(c => c.ContactDate == selectedDay);
+
+        var ordered = selected
+            .OrderBy(c => c.ContactDate).ThenBy(c => c.Id)
+            .ToList();
+
+        var total = ordered.Count;
+        var totalPages = (int)Math.Ceiling(total / (double)pageSize);
+
+        return new ContactPageDto(
+            ordered.Skip((page - 1) * pageSize).Take(pageSize).ToList(),
+            total,
+            page,
+            pageSize,
+            totalPages,
+            dayCounts);
+    }
+
+    private static DateOnly? ParseDay(string? day)
+    {
+        if (string.IsNullOrWhiteSpace(day))
+        {
+            return null;
+        }
+
+        if (!DateOnly.TryParseExact(day, "yyyy-MM-dd", out var parsed))
+        {
+            throw new ValidationException("day", "El día debe tener el formato YYYY-MM-DD.");
+        }
+
+        return parsed;
     }
 
     private static Contact ResolveCurrentValues(Contact contact, IReadOnlyList<ContactAmendment> amendments)

@@ -40,6 +40,8 @@ export interface ProblemDetailsResponse {
 export interface ContactFilters {
   gestorId?: number;
   city?: string;
+  day?: string;
+  page?: number;
 }
 
 export interface ContactListItem {
@@ -50,6 +52,15 @@ export interface ContactListItem {
   channel: string;
   result: string;
   notes?: string;
+}
+
+export interface ContactPage {
+  items: ContactListItem[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+  dayCounts: Record<string, number>;
 }
 
 export interface CreateAmendmentRequest {

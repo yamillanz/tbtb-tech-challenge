@@ -99,9 +99,12 @@ public class CorregirContactoTests
                 contact.ContactDate.ToString("yyyy-MM"),
                 null,
                 null,
+                null,
+                1,
+                100,
                 CancellationToken.None);
 
-            var contactInList = contactsOfMonth.Single(c => c.Id == contact.Id);
+            var contactInList = contactsOfMonth.Items.Single(c => c.Id == contact.Id);
             Assert.Equal("no contesta", contactInList.Result);
             Assert.Equal("llamada", contactInList.Channel);
         }
