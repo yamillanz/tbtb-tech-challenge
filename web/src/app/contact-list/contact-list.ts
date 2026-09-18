@@ -9,6 +9,15 @@ export interface DayEntry {
   count: number;
 }
 
+export interface CorrectionFormValue {
+  correctingGestorId: number | null;
+  reason: string;
+  channel: string;
+  result: string;
+  contactDate: string;
+  notes: string;
+}
+
 @Component({
   selector: 'app-contact-list',
   imports: [ReactiveFormsModule],
@@ -136,33 +145,15 @@ export class ContactList {
       return;
     }
 
-    const value = this.form.getRawValue();
-    if (value.correctingGestorId === null) {
+    const formValue: CorrectionFormValue = this.form.getRawValue();
+    if (formValue.correctingGestorId === null) {
       this.form.markAllAsTouched();
       return;
     }
 
-    const request: CreateAmendmentRequest = {
-      gestorId: value.correctingGestorId,
-      reason: value.reason
-    };
-
-    if (value.channel !== contact.channel) {
-      request.channel = value.channel;
-    }
-    if (value.result !== contact.result) {
-      request.result = value.result;
-    }
-    if (value.contactDate !== contact.contactDate) {
-      request.contactDate = value.contactDate;
-    }
-    if (value.notes !== (contact.notes ?? '')) {
-      request.notes = value.notes;
-    }
-
     this.submitting.set(true);
 
-    this.contactsService.createAmendment(contact.id, request).subscribe({
+    this.contactsService.createAmendment(contact.id, this.buildAmendmentRequest(contact, formValue.correctingGestorId, formValue)).subscribe({
       next: () => {
         this.submitting.set(false);
         this.corrected.set(true);
@@ -174,6 +165,35 @@ export class ContactList {
         this.applyServerErrors(response.error);
       }
     });
+  }
+
+  private buildAmendmentRequest(
+    contact: ContactListItem,
+    correctingGestorId: number,
+    formValue: CorrectionFormValue
+  ): CreateAmendmentRequest {
+    const request: CreateAmendmentRequest = {
+      gestorId: correctingGestorId,
+      reason: formValue.reason
+    };
+
+    if (formValue.channel !== contact.channel) {
+      request.channel = formValue.channel;
+    }
+
+    if (formValue.result !== contact.result) {
+      request.result = formValue.result;
+    }
+
+    if (formValue.contactDate !== contact.contactDate) {
+      request.contactDate = formValue.contactDate;
+    }
+
+    if (formValue.notes !== (contact.notes ?? '')) {
+      request.notes = formValue.notes;
+    }
+
+    return request;
   }
 
   private applyServerErrors(body: ProblemDetailsResponse | null): void {
