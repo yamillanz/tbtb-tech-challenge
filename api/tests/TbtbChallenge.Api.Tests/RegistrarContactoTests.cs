@@ -6,6 +6,7 @@ using TbtbChallenge.Api.Services;
 
 namespace TbtbChallenge.Api.Tests;
 
+[Collection("SqlServer")]
 public class RegistrarContactoTests
 {
     private static TbtbChallengeDbContext CreateContext()
@@ -25,7 +26,7 @@ public class RegistrarContactoTests
     {
         using var context = CreateContext();
 
-        var paciente = new Patient
+        var patient = new Patient
         {
             Name = "Paciente CA-2",
             DocumentType = "CC",
@@ -42,7 +43,7 @@ public class RegistrarContactoTests
             Name = "Gestor CA-2"
         };
 
-        context.Patients.Add(paciente);
+        context.Patients.Add(patient);
         context.Gestors.Add(gestor);
         await context.SaveChangesAsync();
 
@@ -50,7 +51,7 @@ public class RegistrarContactoTests
         {
             var servicio = new ContactService(context);
             var request = new CreateContactRequest(
-                paciente.Id,
+                patient.Id,
                 gestor.Id,
                 DateOnly.FromDateTime(DateTime.UtcNow),
                 "whatsapp",
@@ -59,14 +60,14 @@ public class RegistrarContactoTests
 
             var contact = await servicio.CreateContactAsync(request, CancellationToken.None);
 
-            Assert.Equal(paciente.Id, contact.PatientId);
+            Assert.Equal(patient.Id, contact.PatientId);
             Assert.Equal(gestor.Id, contact.GestorId);
             Assert.Equal(request.ContactDate, contact.ContactDate);
             Assert.Equal(request.Channel, contact.Channel);
             Assert.Equal(request.Result, contact.Result);
 
             var persisted = await context.Contacts.SingleAsync(c => c.Id == contact.Id);
-            Assert.Equal(paciente.Id, persisted.PatientId);
+            Assert.Equal(patient.Id, persisted.PatientId);
             Assert.Equal(gestor.Id, persisted.GestorId);
             Assert.Equal(request.ContactDate, persisted.ContactDate);
             Assert.Equal(request.Channel, persisted.Channel);
@@ -74,8 +75,8 @@ public class RegistrarContactoTests
         }
         finally
         {
-            context.Contacts.RemoveRange(context.Contacts.Where(c => c.PatientId == paciente.Id));
-            context.Patients.Remove(paciente);
+            context.Contacts.RemoveRange(context.Contacts.Where(c => c.PatientId == patient.Id));
+            context.Patients.Remove(patient);
             context.Gestors.Remove(gestor);
             await context.SaveChangesAsync();
         }

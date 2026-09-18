@@ -33,8 +33,10 @@ Todo identificador del código — métodos, variables, señales, clases, propie
 Cualquier identificador con español es un rechazo. Antes de commitear código nuevo, correr el barrido de idioma sobre los archivos tocados y revisar cada resultado (los permitidos son solo los cuatro casos de arriba):
 
 ```bash
-grep -rniE "(abrir|cerrar|cargar|guardar|cancelar|registrar|listar|validar|aplicar|crear|obtener|enviar|vigente|corregir)[a-zA-Záéíóúñ]*" --include="*.cs" --include="*.ts" --include="*.html" api/src api/tests web/src
+grep -rniE "(abrir|cerrar|cargar|guardar|cancelar|registrar|listar|validar|aplicar|crear|obtener|enviar|vigente|corregir|refrescar|filtrar|seleccionar|cumple|contacto|paciente|motivo|resultado|canal|ciudad|enmienda|correccion|fila|nueva)[a-zA-Záéíóúñ]*" --include="*.cs" --include="*.ts" --include="*.html" api/src api/tests web/src
 ```
+
+Nota del barrido: cubre verbos **y** sustantivos — los identificadores CamelCase con palabras españolas (`contactoCumple`, `pacienteBogota`, `filas`) fueron la fuga que evadió el primer barrido (detectada por el autor). Los únicos resultados permitidos siguen siendo los cuatro casos de arriba; toda otra coincidencia en posición de identificador se corrige a inglés antes de commitear.
 
 ## Uso de asistentes de IA
 

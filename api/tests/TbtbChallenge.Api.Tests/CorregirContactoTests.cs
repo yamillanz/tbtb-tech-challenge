@@ -7,6 +7,7 @@ using TbtbChallenge.Api.Services;
 
 namespace TbtbChallenge.Api.Tests;
 
+[Collection("SqlServer")]
 public class CorregirContactoTests
 {
     private static TbtbChallengeDbContext CreateContext()
@@ -96,6 +97,8 @@ public class CorregirContactoTests
             var listService = new ContactService(context);
             var contactsOfMonth = await listService.ListContactsOfMonthAsync(
                 contact.ContactDate.ToString("yyyy-MM"),
+                null,
+                null,
                 CancellationToken.None);
 
             var contactInList = contactsOfMonth.Single(c => c.Id == contact.Id);

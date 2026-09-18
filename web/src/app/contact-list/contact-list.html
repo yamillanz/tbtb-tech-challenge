@@ -5,9 +5,42 @@
     <p class="success" role="status">La corrección quedó registrada.</p>
   }
 
-  @if (selected(); as contacto) {
+  <div class="filtros" role="group" aria-label="Filtros del mes">
+    <div class="campo-filtro">
+      <label for="filterGestorId">Gestor</label>
+      <select id="filterGestorId" [value]="filterGestorId() ?? ''" (change)="filterByGestor($any($event.target).value === '' ? null : $any($event.target).value)">
+        <option value="">Todos los gestores</option>
+        @for (gestor of gestors(); track gestor.id) {
+          <option [value]="gestor.id">{{ gestor.name }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="campo-filtro">
+      <label for="filterCity">Ciudad</label>
+      <select id="filterCity" [value]="filterCity()" (change)="filterByCity($any($event.target).value)">
+        <option value="">Todas las ciudades</option>
+        @for (city of cities(); track city) {
+          <option [value]="city">{{ city }}</option>
+        }
+      </select>
+    </div>
+  </div>
+
+  @if (days().length) {
+    <div class="day-strip" role="group" aria-label="Días del mes con contactos">
+      <button type="button" class="chip" [class.active]="selectedDay() === null" (click)="selectDay(null)">Mes completo</button>
+      @for (day of days(); track day.date) {
+        <button type="button" class="chip" [class.active]="selectedDay() === day.date" (click)="selectDay(day.date)">
+          {{ day.date.slice(8) }} · {{ day.count }}
+        </button>
+      }
+    </div>
+  }
+
+  @if (selected(); as contact) {
     <div class="modal" role="dialog" aria-label="Corregir contacto">
-      <h2>Corregir contacto de {{ contacto.patientName }}</h2>
+      <h2>Corregir contacto de {{ contact.patientName }}</h2>
 
       @if (generalError(); as mensaje) {
         <p class="alert" role="alert">{{ mensaje }}</p>
@@ -102,7 +135,7 @@
       </tr>
     </thead>
     <tbody>
-      @for (contact of contacts(); track contact.id) {
+      @for (contact of visibleContacts(); track contact.id) {
         <tr>
           <td>{{ contact.patientName }}</td>
           <td>{{ contact.gestorName }}</td>

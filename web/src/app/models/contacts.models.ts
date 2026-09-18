@@ -37,6 +37,11 @@ export interface ProblemDetailsResponse {
   errors?: Record<string, string>;
 }
 
+export interface ContactFilters {
+  gestorId?: number;
+  city?: string;
+}
+
 export interface ContactListItem {
   id: number;
   patientName: string;

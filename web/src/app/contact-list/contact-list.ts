@@ -4,6 +4,11 @@ import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angula
 import { ContactsService } from '../services/contacts.service';
 import { ContactListItem, CreateAmendmentRequest, GestorOption, ProblemDetailsResponse } from '../models/contacts.models';
 
+export interface DayEntry {
+  date: string;
+  count: number;
+}
+
 @Component({
   selector: 'app-contact-list',
   imports: [ReactiveFormsModule],
@@ -17,10 +22,15 @@ export class ContactList {
 
   readonly contacts = signal<ContactListItem[]>([]);
   readonly gestors = signal<GestorOption[]>([]);
+  readonly cities = signal<string[]>([]);
   readonly selected = signal<ContactListItem | null>(null);
   readonly submitting = signal(false);
   readonly corrected = signal(false);
   readonly generalError = signal<string | null>(null);
+
+  readonly filterGestorId = signal<number | null>(null);
+  readonly filterCity = signal<string>('');
+  readonly selectedDay = signal<string | null>(null);
 
   readonly channels = ['llamada', 'whatsapp', 'correo'];
   readonly results = ['contestado', 'no contesta', 'buzón', 'número equivocado', 'reagendado', 'otro'];
@@ -34,11 +44,72 @@ export class ContactList {
     notes: this.nfb.control('')
   });
 
+  readonly days = signal<DayEntry[]>([]);
+
+  readonly visibleContacts = signal<ContactListItem[]>([]);
+
   constructor() {
-    this.loadContacts();
     this.contactsService.listGestors().subscribe({
       next: (gestors) => this.gestors.set(gestors)
     });
+
+    this.contactsService.listPatients().subscribe({
+      next: (patients) => this.cities.set([...new Set(patients.map((p) => p.city))].sort())
+    });
+
+    this.loadContacts();
+  }
+
+  filterByGestor(value: string | null): void {
+    this.filterGestorId.set(value === null || value === '' ? null : Number(value));
+    this.loadContacts();
+  }
+
+  filterByCity(city: string): void {
+    this.filterCity.set(city);
+    this.loadContacts();
+  }
+
+  selectDay(day: string | null): void {
+    this.selectedDay.set(day);
+    this.refreshVisibleContacts();
+  }
+
+  private loadContacts(): void {
+    const gestorId = this.filterGestorId() ?? undefined;
+    const city = this.filterCity() || undefined;
+
+    this.contactsService.listContacts({ gestorId, city }).subscribe({
+      next: (contacts) => {
+        this.contacts.set(contacts);
+        this.rebuildDayStrip(contacts);
+        this.refreshVisibleContacts();
+      }
+    });
+  }
+
+  private rebuildDayStrip(contacts: ContactListItem[]): void {
+    const conteos = new Map<string, number>();
+    for (const contact of contacts) {
+      conteos.set(contact.contactDate, (conteos.get(contact.contactDate) ?? 0) + 1);
+    }
+
+    this.days.set(
+      [...conteos.entries()]
+        .map(([date, count]) => ({ date, count }))
+        .sort((a, b) => a.date.localeCompare(b.date))
+    );
+
+    if (this.selectedDay() && !conteos.has(this.selectedDay()!)) {
+      this.selectedDay.set(null);
+    }
+    this.refreshVisibleContacts();
+  }
+
+  private refreshVisibleContacts(): void {
+    const day = this.selectedDay();
+    const list = day ? this.contacts().filter((c) => c.contactDate === day) : this.contacts();
+    this.visibleContacts.set(list);
   }
 
   openCorrection(contact: ContactListItem): void {
@@ -106,12 +177,6 @@ export class ContactList {
         this.submitting.set(false);
         this.applyServerErrors(response.error);
       }
-    });
-  }
-
-  private loadContacts(): void {
-    this.contactsService.listContacts().subscribe({
-      next: (contacts) => this.contacts.set(contacts)
     });
   }
 

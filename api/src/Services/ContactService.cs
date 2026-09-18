@@ -55,15 +55,27 @@ public class ContactService
             contact.Notes);
     }
 
-    public async Task<IReadOnlyList<ContactListItemDto>> ListContactsOfMonthAsync(string? month, CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<ContactListItemDto>> ListContactsOfMonthAsync(string? month, int? gestorId, string? city, CancellationToken cancellationToken)
     {
         var startOfMonth = StartOfMonthFrom(month);
         var endOfMonth = startOfMonth.AddMonths(1).AddDays(-1);
 
-        var contacts = await _context.Contacts
+        var query = _context.Contacts
             .Include(c => c.Patient)
             .Include(c => c.Gestor)
-            .Where(c => c.ContactDate >= startOfMonth && c.ContactDate <= endOfMonth)
+            .Where(c => c.ContactDate >= startOfMonth && c.ContactDate <= endOfMonth);
+
+        if (gestorId is not null)
+        {
+            query = query.Where(c => c.GestorId == gestorId);
+        }
+
+        if (!string.IsNullOrWhiteSpace(city))
+        {
+            query = query.Where(c => c.Patient.City == city);
+        }
+
+        var contacts = await query
             .OrderBy(c => c.ContactDate).ThenBy(c => c.Id)
             .ToListAsync(cancellationToken);
 
