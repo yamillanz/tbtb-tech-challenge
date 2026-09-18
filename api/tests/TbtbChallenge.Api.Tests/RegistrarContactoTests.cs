@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using TbtbChallenge.Api.Data;
 using TbtbChallenge.Api.Dtos;
 using TbtbChallenge.Api.Entities;
+using TbtbChallenge.Api.Exceptions;
 using TbtbChallenge.Api.Services;
 
 namespace TbtbChallenge.Api.Tests;
@@ -78,6 +79,77 @@ public class RegistrarContactoTests
             context.Contacts.RemoveRange(context.Contacts.Where(c => c.PatientId == patient.Id));
             context.Patients.Remove(patient);
             context.Gestors.Remove(gestor);
+            await context.SaveChangesAsync();
+        }
+    }
+
+    [Fact]
+    public async Task RegistrarContacto_CuandoElCanalOElResultadoEstanFueraDelCatalogo_LaSolicitudNoSePersiste()
+    {
+        using var context = CreateContext();
+        var contactService = new ContactService(context);
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+
+        var channelException = await Assert.ThrowsAsync<ValidationException>(
+            () => contactService.CreateContactAsync(new CreateContactRequest(999999, 999999, today, "telegrafía", "contestado", null), CancellationToken.None));
+        Assert.Equal("channel", channelException.Field);
+
+        var resultException = await Assert.ThrowsAsync<ValidationException>(
+            () => contactService.CreateContactAsync(new CreateContactRequest(999999, 999999, today, "llamada", "desconectado", null), CancellationToken.None));
+        Assert.Equal("result", resultException.Field);
+
+        Assert.Empty(await context.Contacts.Where(c => c.Channel == "telegrafía" || c.Result == "desconectado").ToListAsync());
+    }
+
+    [Fact]
+    public async Task RegistrarContacto_CuandoLaFechaEstaFueraDelMesEnCurso_LaSolicitudNoSePersiste()
+    {
+        using var context = CreateContext();
+        var contactService = new ContactService(context);
+        var outsideDate = ContactRules.StartOfCurrentProgramMonth().AddMonths(-1);
+
+        var exception = await Assert.ThrowsAsync<ValidationException>(
+            () => contactService.CreateContactAsync(new CreateContactRequest(999999, 999999, outsideDate, "llamada", "contestado", null), CancellationToken.None));
+
+        Assert.Equal("contactDate", exception.Field);
+    }
+
+    [Fact]
+    public async Task RegistrarContacto_CuandoLaReferenciaNoExiste_LaSolicitudNoSePersiste()
+    {
+        using var context = CreateContext();
+        var contactService = new ContactService(context);
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+
+        var patientException = await Assert.ThrowsAsync<KeyNotFoundException>(
+            () => contactService.CreateContactAsync(new CreateContactRequest(999999, 999999, today, "llamada", "contestado", null), CancellationToken.None));
+        Assert.Contains("paciente", patientException.Message, StringComparison.OrdinalIgnoreCase);
+
+        var patient = new Patient
+        {
+            Name = "Paciente CA-E2",
+            DocumentType = "CC",
+            DocumentNumber = $"CAE2-{Guid.NewGuid():N}",
+            Phone = "+573000000006",
+            City = "Bogotá",
+            TreatmentStartDate = new DateOnly(2026, 8, 1),
+            Status = "activo",
+            CreatedAt = DateTime.UtcNow
+        };
+        context.Patients.Add(patient);
+        await context.SaveChangesAsync();
+
+        try
+        {
+            var gestorException = await Assert.ThrowsAsync<KeyNotFoundException>(
+                () => contactService.CreateContactAsync(new CreateContactRequest(patient.Id, 999999, today, "llamada", "contestado", null), CancellationToken.None));
+            Assert.Contains("gestor", gestorException.Message, StringComparison.OrdinalIgnoreCase);
+
+            Assert.Empty(await context.Contacts.Where(c => c.PatientId == patient.Id).ToListAsync());
+        }
+        finally
+        {
+            context.Patients.Remove(patient);
             await context.SaveChangesAsync();
         }
     }

@@ -147,6 +147,18 @@ public class ConsultarContactosTests
     }
 
     [Fact]
+    public async Task ConsultarContactos_CuandoElDiaNoTieneFormatoValido_LaConsultaSeRechaza()
+    {
+        using var context = CreateContext();
+        var contactService = new ContactService(context);
+
+        var exception = await Assert.ThrowsAsync<ValidationException>(
+            () => contactService.ListContactsOfMonthAsync(null, null, null, "ayer", 1, 20, CancellationToken.None));
+
+        Assert.Equal("day", exception.Field);
+    }
+
+    [Fact]
     public async Task ConsultarContactos_CuandoSeFiltraPorDia_MuestraElContactoEnSuFechaVigenteYConservaLosConteosDelMes()
     {
         using var context = CreateContext();

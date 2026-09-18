@@ -67,6 +67,8 @@ public class ContactService
             throw new ValidationException("pageSize", "El tamaño de página debe estar entre 1 y 100.");
         }
 
+        var selectedDay = ParseDay(day);
+
         var startOfMonth = StartOfMonthFrom(month);
         var endOfMonth = startOfMonth.AddMonths(1).AddDays(-1);
 
@@ -112,7 +114,6 @@ public class ContactService
                 current.Notes));
         }
 
-        var selectedDay = ParseDay(day);
 
         var dayCounts = resolved
             .GroupBy(c => c.ContactDate)

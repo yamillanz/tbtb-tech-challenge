@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using TbtbChallenge.Api.Exceptions;
@@ -22,7 +23,7 @@ public class ApiExceptionHandler : IExceptionHandler
             };
 
             httpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
-            await httpContext.Response.WriteAsJsonAsync(problemDetails, cancellationToken);
+            await httpContext.Response.WriteAsJsonAsync(problemDetails, (JsonSerializerOptions?)null, "application/problem+json", cancellationToken);
             return true;
         }
 
@@ -36,7 +37,7 @@ public class ApiExceptionHandler : IExceptionHandler
             };
 
             httpContext.Response.StatusCode = StatusCodes.Status404NotFound;
-            await httpContext.Response.WriteAsJsonAsync(problemDetails, cancellationToken);
+            await httpContext.Response.WriteAsJsonAsync(problemDetails, (JsonSerializerOptions?)null, "application/problem+json", cancellationToken);
             return true;
         }
 

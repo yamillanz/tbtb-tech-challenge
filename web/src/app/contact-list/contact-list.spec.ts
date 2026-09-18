@@ -177,6 +177,27 @@ describe('ContactList', () => {
     });
   });
 
+  it('CorreccionDesdeLaPantalla_CuandoElServidorResponde404_MuestraLaAlertaGeneral', async () => {
+    const detalle = 'El contacto 999 no existe.';
+    const createAmendment = jasmine.createSpy('createAmendment').and.callFake(() =>
+      throwError(() => new HttpErrorResponse({
+        status: 404,
+        error: { title: 'Recurso no encontrado', status: 404, detail: detalle }
+      }))
+    );
+    await renderContactListWith(createFakeService({ createAmendment }));
+
+    const user = userEvent.setup();
+    await user.click(await screen.findAllByRole('button', { name: 'Corregir' }).then((botones) => botones[0]));
+    await user.selectOptions(screen.getByLabelText('Gestor que corrige'), within(screen.getByLabelText('Gestor que corrige')).getByRole('option', { name: 'Andrés Peña' }));
+    await user.type(screen.getByLabelText('Motivo de la corrección'), 'Corrección a contacto inexistente');
+    await user.click(screen.getByRole('button', { name: 'Guardar corrección' }));
+
+    expect(await screen.findByRole('alert')).toBeTruthy();
+    expect(screen.getByRole('alert').textContent).toContain(detalle);
+    expect(screen.queryByRole('status')).toBeNull();
+  });
+
   it('PaginacionDeLaPantalla_CuandoSeAvanzaDePagina_SeSolicitaLaSiguienteYSePreservaTrasCorregir', async () => {
     const listCalls: ListCalls = [];
     const createFake = createFakeService(

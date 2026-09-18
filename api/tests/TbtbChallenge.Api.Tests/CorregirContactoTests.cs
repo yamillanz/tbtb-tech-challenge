@@ -144,4 +144,70 @@ public class CorregirContactoTests
             await context.SaveChangesAsync();
         }
     }
+
+    [Fact]
+    public async Task CorregirContacto_CuandoLaEnmiendaNoModificaNingunCampo_LaEnmiendaNoSeRegistra()
+    {
+        using var context = CreateContext();
+        var (patient, gestor, contact) = await CreateArrangementAsync(context);
+
+        try
+        {
+            var amendmentService = new ContactAmendmentService(context);
+            var request = new CreateAmendmentRequest(gestor.Id, "Ajuste sin cambios", null, null, null, null);
+
+            var exception = await Assert.ThrowsAsync<ValidationException>(
+                () => amendmentService.CreateAmendmentAsync(contact.Id, request, CancellationToken.None));
+
+            Assert.Equal("amendment", exception.Field);
+            Assert.Empty(await context.ContactAmendments.Where(a => a.ContactId == contact.Id).ToListAsync());
+        }
+        finally
+        {
+            context.Contacts.Remove(contact);
+            context.Patients.Remove(patient);
+            context.Gestors.Remove(gestor);
+            await context.SaveChangesAsync();
+        }
+    }
+
+    [Fact]
+    public async Task CorregirContacto_CuandoElCampoCorregibleEstaFueraDelCatalogo_LaEnmiendaNoSeRegistra()
+    {
+        using var context = CreateContext();
+        var (patient, gestor, contact) = await CreateArrangementAsync(context);
+
+        try
+        {
+            var amendmentService = new ContactAmendmentService(context);
+            var request = new CreateAmendmentRequest(gestor.Id, "Corrige el canal a uno inexistente", "telegrafía", null, null, null);
+
+            var exception = await Assert.ThrowsAsync<ValidationException>(
+                () => amendmentService.CreateAmendmentAsync(contact.Id, request, CancellationToken.None));
+
+            Assert.Equal("channel", exception.Field);
+            Assert.Empty(await context.ContactAmendments.Where(a => a.ContactId == contact.Id).ToListAsync());
+        }
+        finally
+        {
+            context.Contacts.Remove(contact);
+            context.Patients.Remove(patient);
+            context.Gestors.Remove(gestor);
+            await context.SaveChangesAsync();
+        }
+    }
+
+    [Fact]
+    public async Task CorregirContacto_CuandoElContactoCorregidoNoExiste_LaEnmiendaNoSeRegistra()
+    {
+        using var context = CreateContext();
+
+        var amendmentService = new ContactAmendmentService(context);
+
+        var exception = await Assert.ThrowsAsync<KeyNotFoundException>(
+            () => amendmentService.CreateAmendmentAsync(999999, new CreateAmendmentRequest(999999, "Corrección a contacto inexistente", null, null, null, null), CancellationToken.None));
+
+        Assert.Contains("contacto", exception.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Empty(await context.ContactAmendments.Where(a => a.ContactId == 999999).ToListAsync());
+    }
 }
