@@ -114,9 +114,17 @@ Los documentos del ejercicio y OpenSpec se complementan: `01-hallazgos.md` y `02
 
 | Cambio (OpenSpec) | Objetivo | Cubre | Artefactos | Estado |
 |---|---|---|---|---|
-| `add-contact-recording` | Registrar contactos (fecha, canal, resultado) asociados a un paciente | CA-2 | proposal.md · design.md · tasks.md · specs/contacts/spec.md | Propuesto |
-| `add-contact-amendment` | Corregir un contacto con trazabilidad: enmienda inmutable con motivo y autor; el reporte refleja el valor vigente | CA-3 | proposal.md · design.md · tasks.md · specs/contacts/spec.md (delta) | Propuesto |
-| `add-monthly-contacts-view` | Vista de contactos del mes en curso con filtros combinados por gestor y ciudad | CA-4 | proposal.md · design.md · tasks.md · specs/contacts-view/spec.md | Propuesto |
-| `add-test-data-seed` | Datos de prueba reproducibles (pacientes, gestores y contactos con fechas calculadas al ejecutarse, relativas al mes en curso) | Soporte | tasks.md (sin delta de specs: cambio de infraestructura) | Propuesto |
+| `add-contact-recording` | Registrar contactos (fecha, canal, resultado) asociados a un paciente | CA-2 | proposal.md · design.md · tasks.md · specs/contacts/spec.md | Archivado |
+| `add-contact-amendment` | Corregir un contacto con trazabilidad: enmienda inmutable con motivo y autor; el reporte refleja el valor vigente | CA-3 | proposal.md · design.md · tasks.md · specs/contacts/spec.md (delta) | Archivado |
+| `add-monthly-contacts-view` | Vista de contactos del mes en curso con filtros combinados por gestor y ciudad, tira de días y paginación (cierre del alcance + change `add-pagination`) | CA-4 | proposal.md · design.md · tasks.md · specs/contacts/spec.md (delta) | Archivado |
+| `add-test-data-seed` | Datos de prueba reproducibles (pacientes, gestores y contactos con fechas calculadas al ejecutarse, relativas al mes en curso) | Soporte | tasks.md (sin delta de specs: cambio de infraestructura) | Archivado |
+
+**Cambios surgidos durante la implementación** (propuestos, aplicados y archivados con el mismo flujo; quedan declarados aquí para mantener el plan coherente con la entrega):
+
+| Cambio (OpenSpec) | Objetivo | Cubre | Estado |
+|---|---|---|---|
+| `add-contact-form-ui-tests` | Pruebas comportamentales del formulario con Testing Library (renderizar, interactuar y observar), en lugar de pruebas triviales de creación | CA-2 (interfaz) | Archivado |
+| `add-pagination` | Sobre paginado en el límite de la API, filtro por día en el servidor con fecha vigente y `dayCounts` del mes filtrado | CA-4 (extensión) | Archivado |
+| `add-error-path-tests` | Cierre de la brecha happy-path/error: 9 pruebas de error y refinación del sobre ProblemDetails con `errors.{campo}` | CA-2/CA-3/CA-4 (verificación) | Archivado |
 
 Cada cambio se valida (`openspec validate`) antes de implementarse y se archiva al completarse, de modo que el historial del repositorio muestre la secuencia completa: propuesta cerrada → tareas ejecutadas → specs actualizadas.
