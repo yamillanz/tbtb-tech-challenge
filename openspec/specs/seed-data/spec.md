@@ -1,7 +1,7 @@
 # seed-data Specification
 
 ## Purpose
-TBD - created by archiving change add-test-data-seed. Update Purpose after archive.
+Datos de demostración reproducibles: un script idempotente carga gestores, pacientes y contactos del mes en curso con fechas calculadas al ejecutarse, de modo que la funcionalidad pueda demostrarse sin inventar datos ni importar el mes en que se corra el repositorio.
 ## Requirements
 ### Requirement: Datos de demostración reproducibles
 El repositorio SHALL incluir un script idempotente de datos de prueba que cargue gestores, pacientes y contactos del mes en curso con fechas calculadas al ejecutarse, de modo que la funcionalidad pueda demostrarse sin inventar datos ni importar el mes en que se corra.

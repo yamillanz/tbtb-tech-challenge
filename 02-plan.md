@@ -50,12 +50,14 @@ Base de datos: **SQL Server**. El esquema se crea con scripts `.sql` versionados
 |---|---|---|---|---|
 | POST | `/api/contacts` | `CreateContactRequest` { patientId, gestorId, contactDate, channel, result, notes } | `ContactDto` (201) | 400 validación (ProblemDetails), 404 paciente o gestor inexistente |
 | POST | `/api/contacts/{id}/amendments` | `CreateAmendmentRequest` { gestorId, reason, channel?, result?, contactDate?, notes? } | `ContactDto` actualizado (200) | 400 (motivo obligatorio, sin campos a corregir), 404 contacto inexistente |
-| GET | `/api/contacts?month=YYYY-MM&gestorId=&city=` | parámetros de consulta; sin `month` se asume el mes en curso | `ContactListItemDto[]` | 400 (mes inválido o fuera de rango) |
+| GET | `/api/contacts?month=YYYY-MM&gestorId=&city=&day=YYYY-MM-DD&page=&pageSize=` | parámetros de consulta; sin `month` se asume el mes en curso | `ContactPageDto` { items, total, page, pageSize, totalPages, dayCounts } | 400 (mes o día inválido, paginación fuera de rango) |
 | GET | `/api/contacts/{id}/amendments` | — | `AmendmentDto[]` | 404 |
 | GET | `/api/patients` | — | `PatientOptionDto[]` { id, name, documentNumber, city } | — |
 | GET | `/api/gestors` | — | `GestorOptionDto[]` { id, name } | — |
 
 Los endpoints de pacientes y gestores alimentan los selects del formulario de registro y el filtro por gestor de la vista del mes. El filtro de ciudad no tiene endpoint propio: se llena con las ciudades distintas de los pacientes ya cargados.
+
+El contrato de la consulta del mes evolucionó con los cambios archivados `add-monthly-contacts-view` y `add-pagination` (filtro por día evaluado en el servidor sobre la fecha vigente, y sobre paginado con `dayCounts` del mes filtrado). La fuente de verdad del contrato vigente es `openspec/specs/contacts/spec.md`.
 
 **Pantallas (Angular 17+):**
 - **Contactos del mes** — tabla con filtros por gestor y ciudad (combinados; las ciudades se derivan de los pacientes cargados), acción "Corregir" por fila.

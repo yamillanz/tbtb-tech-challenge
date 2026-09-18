@@ -1,7 +1,7 @@
 # contacts Specification
 
 ## Purpose
-TBD - created by archiving change add-contact-recording. Update Purpose after archive.
+Registro y consulta de los contactos del programa de seguimiento de pacientes: el gestor registra contactos asociados a un paciente con catálogos controlados de canal y resultado; las correcciones se hacen mediante enmiendas append-only con motivo y autor (el contacto original es inmutable y la consulta resuelve los valores vigentes); y la vista del mes en curso ofrece filtros combinados por gestor y ciudad, filtro por día sobre la fecha vigente y paginación.
 ## Requirements
 ### Requirement: Registro de contacto asociado a un paciente
 El sistema SHALL permitir al gestor registrar un contacto asociado a un paciente indicando fecha, canal y resultado del contacto, y el registro SHALL conservar el gestor que lo registró. El contacto registrado SHALL quedar disponible para la vista del mes y para su corrección con trazabilidad.
